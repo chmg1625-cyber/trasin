@@ -1,0 +1,578 @@
+<!DOCTYPE html> 
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TRAPPING GOD - INVENTORY v2.2</title>
+    <style>
+        /* [1. 테마 설정] */
+        :root {
+            --bg-main: #9a0007; /* 딥 레드 */
+            --bg-panel: #ffffff;
+            --text-main: #333;
+            --accent-red: #d32f2f;
+            --accent-blue: #1976d2;
+            --accent-gold: #fbc02d;
+            --accent-green: #388e3c;
+            --border-col: #ddd;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; outline: none; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: radial-gradient(#d32f2f 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* [2. 헤더] */
+        .header {
+            height: 60px;
+            background: #fff;
+            border-bottom: 1px solid #ffcdd2;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        .header-title {
+            font-family: 'Impact', sans-serif;
+            font-size: 1.8rem;
+            color: #b71c1c;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .header-badge {
+            background: #b71c1c; color: white; padding: 4px 10px; 
+            border-radius: 20px; font-size: 0.8rem; font-weight: bold; font-family: sans-serif;
+        }
+
+        /* [NEW] 네비게이션 탭 */
+        .nav-bar {
+            background: #b71c1c;
+            display: flex;
+            padding: 0 20px;
+            gap: 10px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .nav-item {
+            padding: 15px 20px;
+            color: rgba(255,255,255,0.7);
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 4px solid transparent;
+            transition: 0.2s;
+        }
+        .nav-item:hover { color: white; }
+        .nav-item.active {
+            color: white;
+            border-bottom-color: var(--accent-gold);
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* [3. 메인 레이아웃] */
+        .main-container {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 15px;
+            overflow-y: auto;
+            justify-content: center;
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            border: 1px solid #ffcdd2;
+        }
+        .panel-header {
+            font-size: 1rem; font-weight: 900; color: #b71c1c;
+            border-bottom: 2px solid #ffebee; padding-bottom: 8px; margin-bottom: 5px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* [좌측] 자산 & 상점 */
+        .left-col { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
+        
+        .asset-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #eee;
+        }
+        .asset-val { font-size: 1.3rem; font-weight: 900; color: #333; }
+        
+        .shop-list { display: flex; flex-direction: column; gap: 6px; }
+        .shop-btn {
+            background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: 0.2s;
+        }
+        .shop-btn:active { background: #ffebee; border-color: #ef9a9a; transform: scale(0.98); }
+        .shop-item { font-weight: bold; color: #b71c1c; }
+        .shop-price { font-size: 0.85rem; color: #666; }
+
+        .input-box {
+            width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 6px;
+            text-align: center; font-weight: bold; font-size: 1rem;
+        }
+        .btn-charge {
+            width: 100%; background: #333; color: white; border: none; padding: 12px;
+            border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px;
+        }
+
+        /* [뷰 래퍼] - 탭 전환용 */
+        .view-wrapper { display: flex; gap: 15px; flex: 1; max-width: 920px; }
+        .view-section { display: flex; gap: 15px; flex: 1; }
+
+        /* [중앙] 게임 영역 */
+        .center-col { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 15px; }
+
+        /* 상태창 */
+        .status-board {
+            background: #212121; color: white; padding: 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        .current-p { font-size: 2.5rem; font-weight: 900; color: var(--accent-gold); text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .rank-badge { 
+            background: #424242; padding: 5px 15px; border-radius: 20px; 
+            font-size: 0.9rem; border: 1px solid #666; 
+        }
+        .cost-info { font-size: 0.8rem; color: #bbb; margin-top: 5px; text-align: right;}
+
+        /* 게임 시작 버튼 (오버레이) */
+        .start-overlay {
+            background: #ffebee; border: 2px solid #ef5350; border-radius: 10px;
+            padding: 20px; text-align: center; display: none;
+        }
+        .start-overlay.active { display: block; }
+        .btn-start {
+            background: linear-gradient(to right, #d32f2f, #b71c1c);
+            color: white; font-size: 1.5rem; font-weight: 900;
+            padding: 15px 40px; border: none; border-radius: 50px;
+            cursor: pointer; box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
+            transition: transform 0.1s; width: 100%;
+        }
+        .btn-start:active { transform: scale(0.95); }
+
+        /* 트래핑 버튼 */
+        .trapping-area {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; flex: 1;
+            opacity: 1; transition: opacity 0.3s;
+        }
+        .trapping-area.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+
+        .trap-btn {
+            background: white; border: 2px solid #eee; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; overflow: hidden; transition: 0.2s;
+            padding: 15px 5px; box-shadow: 0 4px 0 #ddd;
+        }
+        .trap-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .trap-name { font-size: 1.2rem; font-weight: 900; margin-bottom: 5px; }
+        .trap-gain { font-size: 1rem; font-weight: bold; color: #1976d2; margin-bottom: 5px; }
+        .trap-rate { font-size: 1.4rem; font-weight: 900; color: #d32f2f; }
+        
+        /* 슈퍼 트래핑 효과 */
+        .super-mode .trap-btn { border-color: var(--accent-gold); background: #fffde7; box-shadow: 0 4px 0 #fbc02d; }
+        .super-mode .trap-rate { color: #f57f17; text-shadow: 0 0 5px rgba(251, 192, 45, 0.5); animation: pulseText 1s infinite; }
+        @keyframes pulseText { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        /* 보상 받기 버튼 */
+        .btn-claim {
+            background: linear-gradient(to right, #1976d2, #1565c0);
+            color: white; font-size: 1.2rem; font-weight: 900; border: none;
+            padding: 15px; border-radius: 8px; width: 100%; cursor: pointer;
+            box-shadow: 0 4px 0 #0d47a1;
+        }
+        .btn-claim:active { transform: translateY(4px); box-shadow: none; }
+        .btn-claim:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+
+        .reward-display {
+            background: #ffebee; border: 1px solid #ffcdd2; padding: 15px;
+            border-radius: 8px; text-align: center;
+        }
+        .reward-title { font-size: 0.9rem; color: #b71c1c; margin-bottom: 5px; }
+        .reward-item { font-size: 1.2rem; font-weight: bold; color: #333; }
+
+        /* [우측] 보상 설정 및 로그 */
+        .right-col { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
+        
+        .reward-list {
+            flex: 1; overflow-y: auto; background: #fafafa; border: 1px solid #eee;
+            border-radius: 8px; padding: 10px; max-height: 400px;
+        }
+        .reward-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .p-badge { background: #333; color: white; font-size: 0.8rem; width: 30px; text-align: center; border-radius: 4px; padding: 4px 0; }
+        .reward-input { flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; }
+
+        .log-area {
+            height: 120px; background: #212121; color: #00e676; padding: 10px;
+            border-radius: 8px; font-family: monospace; font-size: 0.8rem;
+            overflow-y: auto; line-height: 1.4;
+        }
+
+        /* [NEW] 보관함 스타일 */
+        .storage-container {
+            flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+            background: #fafafa; border-radius: 8px; padding: 10px; height: 100%;
+        }
+        .storage-item {
+            background: white; border: 1px solid #eee; border-radius: 8px; padding: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .storage-info { display: flex; flex-direction: column; gap: 4px; }
+        .storage-time { font-size: 0.75rem; color: #999; }
+        .storage-name { font-weight: bold; color: #333; font-size: 1rem; }
+        .storage-badge { 
+            background: var(--accent-gold); color: #333; font-weight: bold; 
+            padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #f9a825;
+        }
+        .bonus-tag { color: var(--accent-blue); font-size: 0.8rem; font-weight: bold; }
+        .empty-msg { text-align: center; color: #aaa; margin-top: 50px; }
+
+        /* [모바일 최적화] */
+        @media (max-width: 1000px) {
+            .view-wrapper, .view-section { flex-direction: column; }
+            .left-col, .center-col, .right-col { width: 100%; max-width: none; min-width: 0; }
+            .center-col { order: 1; } .left-col { order: 2; } .right-col { order: 3; }
+            .trapping-area { min-height: 180px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-title">
+            <span>⚽</span> TRAPPING GOD
+        </div>
+        <div class="header-badge">INVENTORY V2.2</div>
+    </div>
+
+    <!-- 네비게이션 탭 -->
+    <div class="nav-bar">
+        <div class="nav-item active" id="tab-game" onclick="switchTab('game')">트래핑 게임</div>
+        <div class="nav-item" id="tab-storage" onclick="switchTab('storage')">보관함</div>
+    </div>
+
+    <div class="main-container">
+        
+        <!-- [LEFT] 자산 (공통) -->
+        <div class="left-col">
+            <div class="panel">
+                <div class="panel-header">내 자산 (Wallet)</div>
+                <div class="asset-row">
+                    <span style="color:#b71c1c; font-weight:bold;">FV POINT</span>
+                    <span class="asset-val" id="disp-fv">0</span>
+                </div>
+                <div class="asset-row">
+                    <span style="color:#1976d2; font-weight:bold;">TICKETS</span>
+                    <span class="asset-val" style="color:#1976d2;" id="disp-ticket">0</span>
+                </div>
+                <div>
+                    <input type="number" id="input-fv" class="input-box" placeholder="FV 충전액">
+                    <button class="btn-charge" onclick="chargeFV()">충전하기</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">티켓 교환소</div>
+                <div class="shop-list">
+                    <div class="shop-btn" onclick="buyTicket(1)"><span class="shop-item">1장</span><span class="shop-price">4 FV</span></div>
+                    <div class="shop-btn" onclick="buyTicket(10)"><span class="shop-item">10장</span><span class="shop-price">35 FV</span></div>
+                    <div class="shop-btn" onclick="buyTicket(100)"><span class="shop-item">100장</span><span class="shop-price">350 FV</span></div>
+                    <div class="shop-btn" onclick="buyTicket(1000)" style="border-color:#1976d2;"><span class="shop-item" style="color:#1976d2;">1,000장</span><span class="shop-price">3,500 FV</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [VIEW 1] 게임 화면 -->
+        <div id="view-game" class="view-wrapper">
+            <!-- CENTER -->
+            <div class="center-col">
+                <div class="status-board">
+                    <div>
+                        <div style="font-size:0.8rem; color:#aaa;">CURRENT SCORE</div>
+                        <div class="current-p"><span id="disp-p">0</span> <span style="font-size:1.5rem; color:white;">P</span></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="rank-badge" id="disp-rank">AMATEUR</div>
+                        <div style="font-size:0.7rem; color:#888; margin-top:5px;">(최고: <span id="disp-max-p">0</span>P)</div>
+                        <div class="cost-info">입장료: <span id="disp-cost" style="color:#ff8a80; font-weight:bold;">100</span>장</div>
+                    </div>
+                </div>
+
+                <div class="reward-display">
+                    <div class="reward-title">현재 확보 보상 (실패 시 소멸)</div>
+                    <div class="reward-item" id="disp-reward">-</div>
+                </div>
+
+                <div id="start-screen" class="start-overlay active">
+                    <div style="margin-bottom:10px; font-weight:bold; color:#d32f2f;">게임 시작 시 티켓이 소모됩니다</div>
+                    <button class="btn-start" onclick="startGame()">GAME START</button>
+                    <div style="margin-top:5px; font-size:0.8rem; color:#666;">(실패 전까지 추가 소모 없음)</div>
+                </div>
+
+                <div class="trapping-area disabled" id="trap-area">
+                    <button class="trap-btn" onclick="tryTrapping('chest')">
+                        <div class="trap-name">가슴</div><div class="trap-gain">+3 P</div><div class="trap-rate" id="rate-chest">30%</div>
+                    </button>
+                    <button class="trap-btn" onclick="tryTrapping('head')">
+                        <div class="trap-name">머리</div><div class="trap-gain">+2 P</div><div class="trap-rate" id="rate-head">50%</div>
+                    </button>
+                    <button class="trap-btn" onclick="tryTrapping('foot')">
+                        <div class="trap-name">발</div><div class="trap-gain">+1 P</div><div class="trap-rate" id="rate-foot">70%</div>
+                    </button>
+                </div>
+
+                <button class="btn-claim" id="btn-claim" onclick="claimReward()" disabled>현재 보상 받고 끝내기</button>
+                <div style="text-align:center; font-size:0.8rem; color:#d32f2f; background:#ffebee; padding:5px; border-radius:4px;">★ 3, 6, 9... P 달성 시 성공 확률 UP! ★</div>
+            </div>
+
+            <!-- RIGHT -->
+            <div class="right-col">
+                <div class="panel" style="flex:1;">
+                    <div class="panel-header">보상 설정</div>
+                    <div class="reward-list" id="reward-list-container"></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>시스템 로그</span><span style="font-size:0.7rem; color:#999; cursor:pointer;" onclick="clearLog()">지우기</span>
+                    </div>
+                    <div class="log-area" id="log-box">[SYSTEM] 준비 완료.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [VIEW 2] 보관함 화면 -->
+        <div id="view-storage" class="view-wrapper" style="display:none;">
+            <div class="panel" style="width:100%; height:100%;">
+                <div class="panel-header">
+                    <span>획득한 보상 목록</span>
+                    <span style="font-size:0.8rem; color:#d32f2f; cursor:pointer; text-decoration:underline;" onclick="clearStorage()">전체 삭제</span>
+                </div>
+                <div id="storage-list" class="storage-container">
+                    <div class="empty-msg">획득한 보상이 없습니다.</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    // === 변수 ===
+    let myFV = 0, myTickets = 0;
+    let currentP = 0, maxP = 0, isPlaying = false;
+    let rewardMap = {};
+    let inventory = []; // 보관함 데이터
+
+    for(let i=1; i<=24; i++) rewardMap[i] = `${i}P 달성 보상`;
+
+    function init() { renderRewardInputs(); updateUI(); }
+
+    // === 탭 전환 ===
+    function switchTab(tab) {
+        document.getElementById('tab-game').className = tab === 'game' ? 'nav-item active' : 'nav-item';
+        document.getElementById('tab-storage').className = tab === 'storage' ? 'nav-item active' : 'nav-item';
+        
+        document.getElementById('view-game').style.display = tab === 'game' ? 'flex' : 'none';
+        document.getElementById('view-storage').style.display = tab === 'storage' ? 'flex' : 'none';
+        
+        if(tab === 'storage') renderStorage();
+    }
+
+    // === 게임 로직 ===
+    function startGame() {
+        if(isPlaying) return;
+        let cost = getEntryCost();
+        if(myTickets < cost) { alert(`티켓 부족. (필요: ${cost}장)`); return; }
+        myTickets -= cost; isPlaying = true; currentP = 0;
+        log(`[시작] 게임 시작! (소모: ${cost}장)`);
+        updateUI();
+    }
+
+    function tryTrapping(type) {
+        if(!isPlaying) { alert("게임 시작 필요"); return; }
+        let isSuper = (currentP > 0 && currentP % 3 === 0);
+        let successRate = 0, gainP = 0;
+
+        if(type === 'chest') { successRate = isSuper ? 50 : 30; gainP = 3; }
+        else if(type === 'head') { successRate = isSuper ? 65 : 50; gainP = 2; }
+        else if(type === 'foot') { successRate = isSuper ? 85 : 70; gainP = 1; }
+
+        let rand = Math.random() * 100;
+        if(rand < successRate) {
+            currentP += gainP;
+            if(currentP > 24) currentP = 24;
+            if(currentP > maxP) {
+                maxP = currentP;
+                if(currentP===12) log("세미프로 등급 달성!");
+                if(currentP===21) log("프로 등급 달성!");
+            }
+            log(`[성공] ${type.toUpperCase()} 성공! (+${gainP}P) -> ${currentP}P`);
+        } else {
+            log(`[실패] ${type.toUpperCase()} 실패...`);
+            gameOver();
+        }
+        updateUI();
+    }
+
+    function claimReward() {
+        if(!isPlaying || currentP === 0) return;
+        let rewardName = document.getElementById(`reward-input-${currentP}`).value;
+        let bonusTickets = (currentP > 0) ? currentP : 0; // P만큼 티켓 지급
+
+        // 보관함에 추가
+        addToStorage(currentP, rewardName, bonusTickets);
+        
+        // 보너스 지급
+        if(bonusTickets > 0) {
+            myTickets += bonusTickets;
+            log(`[보상] ${currentP}P 보상 획득 + 티켓 ${bonusTickets}장`);
+        }
+
+        gameOver();
+        updateUI();
+    }
+
+    function gameOver() { isPlaying = false; currentP = 0; }
+
+    // === 보관함 로직 ===
+    function addToStorage(p, name, bonus) {
+        const item = {
+            p: p,
+            name: name,
+            bonus: bonus,
+            date: new Date()
+        };
+        inventory.unshift(item); // 최신순
+        renderStorage(); // 즉시 갱신 (탭 이동 안 해도)
+    }
+
+    function renderStorage() {
+        const container = document.getElementById('storage-list');
+        if(inventory.length === 0) {
+            container.innerHTML = '<div class="empty-msg">획득한 보상이 없습니다.</div>';
+            return;
+        }
+        
+        let html = '';
+        inventory.forEach(item => {
+            const timeStr = item.date.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            html += `
+                <div class="storage-item">
+                    <div class="storage-info">
+                        <span class="storage-time">${timeStr} 획득</span>
+                        <span class="storage-name">${item.name}</span>
+                        ${item.bonus > 0 ? `<span class="bonus-tag">+ 티켓 ${item.bonus}장</span>` : ''}
+                    </div>
+                    <div class="storage-badge">${item.p}P</div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function clearStorage() {
+        if(confirm("보관함을 비우시겠습니까?")) {
+            inventory = [];
+            renderStorage();
+        }
+    }
+
+    // === 유틸리티 ===
+    function getEntryCost() {
+        if(maxP >= 21) return 70;
+        if(maxP >= 12) return 80;
+        return 100;
+    }
+    function getRankName() {
+        if(maxP >= 21) return "PRO";
+        if(maxP >= 12) return "SEMI-PRO";
+        return "AMATEUR";
+    }
+    function updateUI() {
+        document.getElementById('disp-fv').innerText = myFV.toLocaleString();
+        document.getElementById('disp-ticket').innerText = myTickets.toLocaleString();
+        document.getElementById('disp-p').innerText = currentP;
+        document.getElementById('disp-max-p').innerText = maxP;
+        document.getElementById('disp-rank').innerText = getRankName();
+        document.getElementById('disp-cost').innerText = getEntryCost();
+        
+        let rName = currentP > 0 ? document.getElementById(`reward-input-${currentP}`).value : "-";
+        document.getElementById('disp-reward').innerText = rName;
+
+        const area = document.getElementById('trap-area');
+        const start = document.getElementById('start-screen');
+        const claim = document.getElementById('btn-claim');
+
+        if(isPlaying) {
+            area.classList.remove('disabled');
+            start.classList.remove('active');
+            claim.disabled = (currentP === 0);
+        } else {
+            area.classList.add('disabled');
+            start.classList.add('active');
+            claim.disabled = true;
+        }
+
+        // 슈퍼 트래핑 (0 초과 3배수)
+        let isSuper = (currentP > 0 && currentP % 3 === 0);
+        if(isSuper) {
+            area.classList.add('super-mode');
+            document.getElementById('rate-chest').innerText = "50%";
+            document.getElementById('rate-head').innerText = "65%";
+            document.getElementById('rate-foot').innerText = "85%";
+        } else {
+            area.classList.remove('super-mode');
+            document.getElementById('rate-chest').innerText = "30%";
+            document.getElementById('rate-head').innerText = "50%";
+            document.getElementById('rate-foot').innerText = "70%";
+        }
+    }
+
+    function chargeFV() {
+        let v = parseInt(document.getElementById('input-fv').value);
+        if(v > 0) { myFV += v; document.getElementById('input-fv').value=''; updateUI(); log(`${v} FV 충전`); }
+    }
+    function buyTicket(n) {
+        let cost = 0;
+        if(n===1) cost=4; else if(n===10) cost=35; else if(n===100) cost=350; else cost=3500;
+        if(myFV >= cost) { myFV-=cost; myTickets+=n; updateUI(); log(`티켓 ${n}장 구매`); } else log("FV 부족");
+    }
+    function renderRewardInputs() {
+        const c = document.getElementById('reward-list-container');
+        let h = '';
+        for(let i=1; i<=24; i++) {
+            h += `<div class="reward-row"><div class="p-badge">${i}P</div><input type="text" class="reward-input" id="reward-input-${i}" value="${rewardMap[i]}"></div>`;
+        }
+        c.innerHTML = h;
+    }
+    function log(msg) {
+        const b = document.getElementById('log-box');
+        b.innerHTML = `<div><span style="color:#777">[LOG]</span> ${msg}</div>` + b.innerHTML;
+    }
+    function clearLog() { document.getElementById('log-box').innerHTML = ''; }
+
+    init();
+</script>
+</body>
+</html>
